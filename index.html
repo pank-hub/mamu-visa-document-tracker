@@ -63,12 +63,15 @@
         </select>
         <input id="new-assignee" type="text" placeholder="Assignee *" class="border border-slate-300 p-2 rounded-lg outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
         <input id="new-phone" type="text" placeholder="Telephone (Optional)" class="border border-slate-300 p-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
         <input id="new-email" type="email" placeholder="Email (Optional)" class="border border-slate-300 p-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
-        <input id="new-address" type="text" placeholder="Address (Optional)" class="border border-slate-300 p-2 rounded-lg text-sm md:col-span-2 focus:ring-2 focus:ring-blue-500 outline-none" />
+        <input id="new-address" type="text" placeholder="Address (Optional)" class="border border-slate-300 p-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
       </div>
-      <button onclick="addDocument()" class="mt-4 bg-blue-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors w-full md:w-auto">Add to Tracker</button>
+      <div class="mb-3">
+        <input id="new-notes" type="text" placeholder="Comments / Notes (e.g. Needs translation)" class="w-full border border-slate-300 p-2 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none" />
+      </div>
+      <button onclick="addDocument()" class="bg-blue-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors w-full md:w-auto">Add to Tracker</button>
     </div>
 
     <!-- Task List Container -->
@@ -99,6 +102,7 @@
           <input id="edit-email" type="email" placeholder="Email" class="w-full border border-slate-300 p-2 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
         <input id="edit-address" type="text" placeholder="Address" class="w-full border border-slate-300 p-2 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" />
+        <input id="edit-notes" type="text" placeholder="Comments / Notes" class="w-full border border-slate-300 p-2 rounded-lg text-sm outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
       <div class="flex justify-end gap-3 mt-6">
         <button onclick="closeEditModal()" class="px-4 py-2 bg-slate-200 text-slate-700 rounded-lg font-medium hover:bg-slate-300">Cancel</button>
@@ -211,7 +215,7 @@
           <select onchange="updateStatus('${task.id}', this.value)" class="border border-slate-300 rounded-lg px-4 py-2 text-sm bg-slate-50 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed" ${task.is_locked ? 'disabled' : ''}>
             ${['Pending', 'In Progress', 'Translated', 'Legalized (MOFA)', 'Completed'].map(st => `
               <option value="${st}" ${task.status === st ? 'selected' : ''}>${st}</option>
-            `).join('')}
+            `)}
           </select>
         </div>
       `}).join('');
@@ -222,12 +226,11 @@
       if (currentIndex === -1) return;
       
       const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-      if (targetIndex < 0 || targetIndex >= allTasks.length) return; // Can't move past edges
+      if (targetIndex < 0 || targetIndex >= allTasks.length) return; 
 
       const currentTask = allTasks[currentIndex];
       const targetTask = allTasks[targetIndex];
 
-      // Swap their sort_order values (or fallback to index if sort_order is 0)
       let currentOrder = currentTask.sort_order ?? currentIndex;
       let targetOrder = targetTask.sort_order ?? targetIndex;
 
@@ -236,7 +239,6 @@
         targetOrder = targetIndex;
       }
 
-      // Update both in database
       await db.from('document_tasks').update({ sort_order: targetOrder }).eq('id', currentTask.id);
       await db.from('document_tasks').update({ sort_order: currentOrder }).eq('id', targetTask.id);
 
@@ -274,6 +276,7 @@
       document.getElementById('edit-phone').value = task.telephone || '';
       document.getElementById('edit-email').value = task.email || '';
       document.getElementById('edit-address').value = task.address || '';
+      document.getElementById('edit-notes').value = task.notes || '';
       
       document.getElementById('edit-modal').classList.remove('hidden');
     }
@@ -291,6 +294,7 @@
         telephone: document.getElementById('edit-phone').value || null,
         email: document.getElementById('edit-email').value || null,
         address: document.getElementById('edit-address').value || null,
+        notes: document.getElementById('edit-notes').value || null,
       };
 
       const { error } = await db.from('document_tasks').update(updates).eq('id', id);
@@ -309,12 +313,20 @@
       const phone = document.getElementById('new-phone').value;
       const email = document.getElementById('new-email').value;
       const address = document.getElementById('new-address').value;
+      const notes = document.getElementById('new-notes').value;
 
       if (!title || !assignee) return alert("Please fill out the document name and assignee.");
 
       const { error } = await db.from('document_tasks').insert({ 
-        title: title, category: category, assignee: assignee, 
-        telephone: phone || null, email: email || null, address: address || null, status: 'Pending', sort_order: allTasks.length 
+        title: title, 
+        category: category, 
+        assignee: assignee, 
+        telephone: phone || null, 
+        email: email || null, 
+        address: address || null, 
+        notes: notes || null,
+        status: 'Pending', 
+        sort_order: allTasks.length 
       });
 
       if (error) {
@@ -325,6 +337,7 @@
         document.getElementById('new-phone').value = '';
         document.getElementById('new-email').value = '';
         document.getElementById('new-address').value = '';
+        document.getElementById('new-notes').value = '';
         loadTasks(); 
       }
     }
