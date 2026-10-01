@@ -65,7 +65,6 @@
     const SUPABASE_URL = "https://urboammtxxgakvhbxydz.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_Qf3lwv88KRlHuHw4B_9dQw_aaJiZpue";
     
-    // Fixed naming conflict: renamed variable from 'supabase' to 'db'
     const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function checkAuth() {
@@ -80,7 +79,15 @@
 
     async function sendMagicLink() {
       const email = document.getElementById('email').value;
-      const { error } = await db.auth.signInWithOtp({ email });
+      
+      // FIX: Force Supabase to redirect to the exact folder URL
+      const { error } = await db.auth.signInWithOtp({ 
+        email: email,
+        options: {
+          emailRedirectTo: 'https://pank-hub.github.io/mamu-visa-document-tracker/'
+        }
+      });
+      
       if (error) alert(error.message);
       else alert('Check your email for the login link!');
     }
