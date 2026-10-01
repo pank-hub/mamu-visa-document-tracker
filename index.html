@@ -65,10 +65,11 @@
     const SUPABASE_URL = "https://urboammtxxgakvhbxydz.supabase.co";
     const SUPABASE_ANON_KEY = "sb_publishable_Qf3lwv88KRlHuHw4B_9dQw_aaJiZpue";
     
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // Fixed naming conflict: renamed variable from 'supabase' to 'db'
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     async function checkAuth() {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await db.auth.getSession();
       if (session) {
         document.getElementById('auth-section').classList.add('hidden');
         document.getElementById('app-section').classList.remove('hidden');
@@ -79,18 +80,18 @@
 
     async function sendMagicLink() {
       const email = document.getElementById('email').value;
-      const { error } = await supabase.auth.signInWithOtp({ email });
+      const { error } = await db.auth.signInWithOtp({ email });
       if (error) alert(error.message);
       else alert('Check your email for the login link!');
     }
 
     async function logout() {
-      await supabase.auth.signOut();
+      await db.auth.signOut();
       location.reload();
     }
 
     async function loadTasks() {
-      const { data: tasks, error } = await supabase
+      const { data: tasks, error } = await db
         .from('document_tasks')
         .select('*')
         .order('category', { ascending: true });
@@ -134,7 +135,7 @@
     }
 
     async function updateStatus(id, newStatus) {
-      const { error } = await supabase.from('document_tasks').update({ status: newStatus }).eq('id', id);
+      const { error } = await db.from('document_tasks').update({ status: newStatus }).eq('id', id);
       if (error) alert("Error updating: " + error.message);
     }
 
@@ -148,7 +149,7 @@
 
       if (!title || !assignee) return alert("Please fill out the document name and assignee.");
 
-      const { error } = await supabase.from('document_tasks').insert({ 
+      const { error } = await db.from('document_tasks').insert({ 
         title: title, 
         category: category, 
         assignee: assignee, 
