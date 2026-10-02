@@ -29,6 +29,75 @@
       </div>
     </header>
 
+    <!-- Interactive 180-Day Timeframe & Date Slider -->
+    <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between pb-3 border-b border-slate-100 gap-3">
+        <div>
+          <h3 class="font-bold text-slate-800 flex items-center gap-2">
+            <span>⏱️ US Green Card 180-Day Timeline</span>
+          </h3>
+          <p class="text-xs text-slate-500">Track departure, passport transit, Schengen travel, and return deadline.</p>
+        </div>
+
+        <!-- US Departure Date Selector -->
+        <div class="flex items-center gap-2">
+          <label for="departure-date" class="text-xs font-semibold text-slate-600">US Departure:</label>
+          <input 
+            id="departure-date" 
+            type="date" 
+            value="2026-09-12" 
+            class="border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-500"
+            onchange="updateTimeline()"
+          />
+        </div>
+      </div>
+
+      <!-- Dynamic Stats Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Inspecting Day</span>
+          <span id="slider-day-count" class="text-lg font-bold text-blue-600">Day 0</span>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Selected Calendar Date</span>
+          <span id="slider-calendar-date" class="text-lg font-bold text-slate-800">Sep 12, 2026</span>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Days Until US Return Limit</span>
+          <span id="slider-days-left" class="text-lg font-bold text-emerald-600">180 days left</span>
+        </div>
+        <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
+          <span class="text-[10px] font-bold text-rose-500 uppercase tracking-wider block">Hard 180-Day Deadline</span>
+          <span id="stat-hard-deadline" class="text-lg font-bold text-rose-600">Mar 11, 2027</span>
+        </div>
+      </div>
+
+      <!-- Interactive Slider -->
+      <div class="mt-3">
+        <input 
+          id="timeframe-slider" 
+          type="range" 
+          min="0" 
+          max="180" 
+          value="0" 
+          class="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none"
+          oninput="renderSliderPosition()"
+        />
+        <div class="flex justify-between text-[11px] text-slate-500 mt-1 font-medium">
+          <span>Day 0 (US Exit)</span>
+          <span>Day 60 (~Passport Return)</span>
+          <span>Day 90 (German Visa)</span>
+          <span>Day 160 (Fly to US)</span>
+          <span class="text-rose-600 font-bold">Day 180 (Limit)</span>
+        </div>
+      </div>
+
+      <!-- Phase Indicator Description -->
+      <div id="phase-banner" class="mt-4 p-3 rounded-lg text-xs font-medium border bg-blue-50 border-blue-200 text-blue-800">
+        Departure from the US. Application window open.
+      </div>
+    </div>
+
     <!-- Smart Summary Dashboard -->
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
       <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
@@ -121,6 +190,101 @@
     let allTasks = []; 
     let isAdmin = false;
 
+    // --- TIMELINE & SLIDER FUNCTIONS ---
+    function getPhaseDetails(day) {
+      if (day === 0) {
+        return {
+          text: "🛫 Departure from the United States. 180-day physical presence countdown begins.",
+          classes: "bg-blue-50 border-blue-200 text-blue-800"
+        };
+      } else if (day <= 30) {
+        return {
+          text: "🇳🇵 Nepal Phase: Submit Section 46 application at VFS Kathmandu. Request immediate passport return upon identity verification.",
+          classes: "bg-orange-50 border-orange-200 text-orange-800"
+        };
+      } else if (day <= 60) {
+        return {
+          text: "📦 Courier & Transit: Passport at Royal Norwegian Embassy in New Delhi for logging and inspection, returning to Kathmandu.",
+          classes: "bg-amber-50 border-amber-200 text-amber-800"
+        };
+      } else if (day <= 90) {
+        return {
+          text: "🇩🇪 German Visa Phase: Passport retrieved in Kathmandu; submit Schengen application with Verpflichtungserklärung.",
+          classes: "bg-indigo-50 border-indigo-200 text-indigo-800"
+        };
+      } else if (day <= 160) {
+        return {
+          text: "🇪🇺 European Travel: Visiting Kanchu in Germany. Safe zone for family visit and leisure.",
+          classes: "bg-emerald-50 border-emerald-200 text-emerald-800"
+        };
+      } else if (day <= 170) {
+        return {
+          text: "✈️️ Recommended Return Window: Fly Frankfurt/Munich ➔ US. Clears border with a safe buffer.",
+          classes: "bg-teal-50 border-teal-200 text-teal-800 font-semibold"
+        };
+      } else {
+        return {
+          text: "⚠️ Critical Risk Window: Exceeding 180 days risks questioning on US permanent residency status at CBP entry.",
+          classes: "bg-rose-50 border-rose-200 text-rose-800 font-bold"
+        };
+      }
+    }
+
+    function updateTimeline() {
+      const depDateInput = document.getElementById('departure-date').value;
+      if (!depDateInput) return;
+
+      const depDate = new Date(depDateInput + 'T00:00:00');
+      const deadlineDate = new Date(depDate);
+      deadlineDate.setDate(deadlineDate.getDate() + 180);
+
+      document.getElementById('stat-hard-deadline').innerText = deadlineDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+
+      renderSliderPosition();
+    }
+
+    function renderSliderPosition() {
+      const depDateInput = document.getElementById('departure-date').value;
+      if (!depDateInput) return;
+
+      const dayOffset = parseInt(document.getElementById('timeframe-slider').value, 10);
+      const depDate = new Date(depDateInput + 'T00:00:00');
+      
+      const currentDate = new Date(depDate);
+      currentDate.setDate(currentDate.getDate() + dayOffset);
+
+      const daysLeft = 180 - dayOffset;
+
+      document.getElementById('slider-day-count').innerText = `Day ${dayOffset}`;
+      document.getElementById('slider-calendar-date').innerText = currentDate.toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric'
+      });
+
+      const daysLeftEl = document.getElementById('slider-days-left');
+      if (daysLeft > 20) {
+        daysLeftEl.innerText = `${daysLeft} days left`;
+        daysLeftEl.className = "text-lg font-bold text-emerald-600";
+      } else if (daysLeft > 0) {
+        daysLeftEl.innerText = `${daysLeft} days left!`;
+        daysLeftEl.className = "text-lg font-bold text-amber-600";
+      } else {
+        daysLeftEl.innerText = "0 days (Limit reached)";
+        daysLeftEl.className = "text-lg font-bold text-rose-600";
+      }
+
+      const phase = getPhaseDetails(dayOffset);
+      const banner = document.getElementById('phase-banner');
+      banner.className = `mt-4 p-3 rounded-lg text-xs font-medium border ${phase.classes}`;
+      banner.innerText = phase.text;
+    }
+
+    // --- AUTH & APPLICATION FUNCTIONS ---
     async function checkAuth() {
       const { data: { session } } = await db.auth.getSession();
       if (session) {
@@ -133,6 +297,7 @@
           document.getElementById('add-task-section').classList.remove('hidden');
         }
 
+        updateTimeline();
         loadTasks();
       }
     }
@@ -227,12 +392,10 @@
       const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
       if (targetIndex < 0 || targetIndex >= allTasks.length) return; 
 
-      // Swap in local array
       const temp = allTasks[currentIndex];
       allTasks[currentIndex] = allTasks[targetIndex];
       allTasks[targetIndex] = temp;
 
-      // Re-assign sequential sort_orders to all items and save to DB
       for (let i = 0; i < allTasks.length; i++) {
         await db.from('document_tasks').update({ sort_order: i }).eq('id', allTasks[i].id);
       }
