@@ -21,7 +21,7 @@
     <header class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 border-b pb-4">
       <div>
         <h1 class="text-2xl font-bold">Phase 1: Application</h1>
-        <p class="text-sm text-slate-500 mt-1">UDI Checklist & Logistics</p>
+        <p class="text-sm text-slate-500 mt-1">UDI Checklist, Logistics & Travel Timeline</p>
       </div>
       <div class="mt-4 md:mt-0 flex items-center gap-4">
         <span id="user-email-display" class="text-sm font-medium bg-slate-200 px-3 py-1 rounded-full text-slate-700"></span>
@@ -29,72 +29,110 @@
       </div>
     </header>
 
-    <!-- Interactive 180-Day Timeframe & Date Slider -->
+    <!-- Interactive Multistage Timeframe & Date Calculator -->
     <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200 mb-6">
-      <div class="flex flex-col md:flex-row md:items-center justify-between pb-3 border-b border-slate-100 gap-3">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-slate-100 gap-2">
         <div>
           <h3 class="font-bold text-slate-800 flex items-center gap-2">
-            <span>⏱️ US Green Card 180-Day Timeline</span>
+            <span>⏱️ Green Card (180-Day) & Travel Planner</span>
           </h3>
-          <p class="text-xs text-slate-500">Track departure, passport transit, Schengen travel, and return deadline.</p>
+          <p class="text-xs text-slate-500">Adjust any date to simulate passport transit, Germany trip length, and return safety.</p>
         </div>
-
-        <!-- US Departure Date Selector -->
-        <div class="flex items-center gap-2">
-          <label for="departure-date" class="text-xs font-semibold text-slate-600">US Departure:</label>
-          <input 
-            id="departure-date" 
-            type="date" 
-            value="2026-09-12" 
-            class="border border-slate-300 rounded-lg px-2.5 py-1 text-xs font-medium text-slate-700 outline-none focus:ring-2 focus:ring-blue-500"
-            onchange="updateTimeline()"
-          />
+        <div class="text-xs bg-slate-100 text-slate-700 px-2.5 py-1 rounded font-medium self-start sm:self-auto">
+          Hard US Limit: <span id="stat-hard-deadline" class="font-bold text-rose-600">Mar 11, 2027</span>
         </div>
       </div>
 
-      <!-- Dynamic Stats Grid -->
+      <!-- Milestone Date Pickers Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 my-4">
+        <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">1. US Departure</label>
+          <input id="date-us-departure" type="date" value="2026-09-12" class="w-full text-xs font-semibold p-1.5 rounded border border-slate-300 bg-white" onchange="handleDepartureChange()" />
+          <span class="text-[10px] text-slate-400 mt-0.5 block">Day 0 of 180</span>
+        </div>
+
+        <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">2. Norway VFS KTM Appt</label>
+          <input id="date-norway-vfs" type="date" value="2026-10-12" class="w-full text-xs font-semibold p-1.5 rounded border border-slate-300 bg-white" onchange="handleNorwayVfsChange()" />
+          <span id="label-norway-offset" class="text-[10px] text-slate-500 mt-0.5 block">Day 30 in Nepal</span>
+        </div>
+
+        <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">3. Passport Back in KTM</label>
+          <input id="date-passport-back" type="date" value="2026-11-09" class="w-full text-xs font-semibold p-1.5 rounded border border-slate-300 bg-white" onchange="handlePassportBackChange()" />
+          <span id="label-transit-duration" class="text-[10px] text-slate-500 mt-0.5 block">~28 days transit (New Delhi)</span>
+        </div>
+
+        <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">4. German Embassy/VFS Appt</label>
+          <input id="date-german-vfs" type="date" value="2026-11-16" class="w-full text-xs font-semibold p-1.5 rounded border border-slate-300 bg-white" onchange="handleGermanVfsChange()" />
+          <span id="label-german-offset" class="text-[10px] text-slate-500 mt-0.5 block">Requires physical passport</span>
+        </div>
+
+        <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">5. Flight to Germany</label>
+          <input id="date-flight-germany" type="date" value="2026-12-05" class="w-full text-xs font-semibold p-1.5 rounded border border-slate-300 bg-white" onchange="recalculateTimeline()" />
+          <span id="label-nepal-total-stay" class="text-[10px] text-slate-500 mt-0.5 block">Departure from Nepal</span>
+        </div>
+
+        <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+          <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">6. Intended Stay in Germany</label>
+          <div class="flex items-center gap-2">
+            <input id="germany-stay-days" type="number" min="15" max="90" value="90" class="w-20 text-xs font-semibold p-1.5 rounded border border-slate-300 bg-white" onchange="recalculateTimeline()" oninput="recalculateTimeline()" />
+            <span class="text-xs text-slate-600">days (Max 90)</span>
+          </div>
+          <span class="text-[10px] text-slate-400 mt-0.5 block">Schengen Type C limit</span>
+        </div>
+      </div>
+
+      <!-- Real-Time Calculation Cards -->
       <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 my-4">
         <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Inspecting Day</span>
-          <span id="slider-day-count" class="text-lg font-bold text-blue-600">Day 0</span>
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total Days in Nepal</span>
+          <span id="stat-days-nepal" class="text-lg font-bold text-slate-800">84 days</span>
         </div>
         <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Selected Calendar Date</span>
-          <span id="slider-calendar-date" class="text-lg font-bold text-slate-800">Sep 12, 2026</span>
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Flight Germany ➔ US</span>
+          <span id="stat-return-us-date" class="text-lg font-bold text-blue-600">Mar 5, 2027</span>
         </div>
         <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Days Until US Return Limit</span>
-          <span id="slider-days-left" class="text-lg font-bold text-emerald-600">180 days left</span>
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Total US Absence</span>
+          <span id="stat-total-absence" class="text-lg font-bold text-amber-600">174 days</span>
         </div>
         <div class="bg-slate-50 p-3 rounded-lg border border-slate-100">
-          <span class="text-[10px] font-bold text-rose-500 uppercase tracking-wider block">Hard 180-Day Deadline</span>
-          <span id="stat-hard-deadline" class="text-lg font-bold text-rose-600">Mar 11, 2027</span>
+          <span class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Buffer vs 180-Day Rule</span>
+          <span id="stat-safety-buffer" class="text-lg font-bold text-emerald-600">6 days safe</span>
         </div>
       </div>
 
-      <!-- Interactive Slider -->
-      <div class="mt-3">
+      <!-- Scrubber Slider (Days 0 to 180) -->
+      <div class="mt-4 pt-4 border-t border-slate-100">
+        <div class="flex justify-between items-center mb-1">
+          <label for="timeframe-slider" class="text-xs font-semibold text-slate-700">Timeline Inspector (Day 0 to 180):</label>
+          <span id="slider-day-indicator" class="text-xs font-bold text-blue-600">Day 0 • Sep 12, 2026</span>
+        </div>
         <input 
           id="timeframe-slider" 
           type="range" 
           min="0" 
           max="180" 
           value="0" 
-          class="w-full h-2.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none"
-          oninput="renderSliderPosition()"
+          class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 focus:outline-none"
+          oninput="renderScrubberPosition()"
         />
-        <div class="flex justify-between text-[11px] text-slate-500 mt-1 font-medium">
-          <span>Day 0 (US Exit)</span>
-          <span>Day 60 (~Passport Return)</span>
-          <span>Day 90 (German Visa)</span>
-          <span>Day 160 (Fly to US)</span>
-          <span class="text-rose-600 font-bold">Day 180 (Limit)</span>
+        <div class="flex justify-between text-[10px] text-slate-400 mt-1 font-medium">
+          <span>US Exit</span>
+          <span>Norway VFS</span>
+          <span>Passport Return</span>
+          <span>Germany VFS</span>
+          <span>Travel Germany</span>
+          <span class="text-rose-600 font-bold">180d Limit</span>
         </div>
       </div>
 
-      <!-- Phase Indicator Description -->
-      <div id="phase-banner" class="mt-4 p-3 rounded-lg text-xs font-medium border bg-blue-50 border-blue-200 text-blue-800">
-        Departure from the US. Application window open.
+      <!-- Dynamic Context Banner -->
+      <div id="timeline-alert-banner" class="mt-4 p-3 rounded-lg text-xs font-medium border bg-blue-50 border-blue-200 text-blue-800">
+        Timeline synced. All steps within parameters.
       </div>
     </div>
 
@@ -190,98 +228,170 @@
     let allTasks = []; 
     let isAdmin = false;
 
-    // --- TIMELINE & SLIDER FUNCTIONS ---
-    function getPhaseDetails(day) {
-      if (day === 0) {
-        return {
-          text: "🛫 Departure from the United States. 180-day physical presence countdown begins.",
-          classes: "bg-blue-50 border-blue-200 text-blue-800"
-        };
-      } else if (day <= 30) {
-        return {
-          text: "🇳🇵 Nepal Phase: Submit Section 46 application at VFS Kathmandu. Request immediate passport return upon identity verification.",
-          classes: "bg-orange-50 border-orange-200 text-orange-800"
-        };
-      } else if (day <= 60) {
-        return {
-          text: "📦 Courier & Transit: Passport at Royal Norwegian Embassy in New Delhi for logging and inspection, returning to Kathmandu.",
-          classes: "bg-amber-50 border-amber-200 text-amber-800"
-        };
-      } else if (day <= 90) {
-        return {
-          text: "🇩🇪 German Visa Phase: Passport retrieved in Kathmandu; submit Schengen application with Verpflichtungserklärung.",
-          classes: "bg-indigo-50 border-indigo-200 text-indigo-800"
-        };
-      } else if (day <= 160) {
-        return {
-          text: "🇪🇺 European Travel: Visiting Kanchu in Germany. Safe zone for family visit and leisure.",
-          classes: "bg-emerald-50 border-emerald-200 text-emerald-800"
-        };
-      } else if (day <= 170) {
-        return {
-          text: "✈️️ Recommended Return Window: Fly Frankfurt/Munich ➔ US. Clears border with a safe buffer.",
-          classes: "bg-teal-50 border-teal-200 text-teal-800 font-semibold"
-        };
-      } else {
-        return {
-          text: "⚠️ Critical Risk Window: Exceeding 180 days risks questioning on US permanent residency status at CBP entry.",
-          classes: "bg-rose-50 border-rose-200 text-rose-800 font-bold"
-        };
+    // --- TIMELINE CALCULATOR ENGINE ---
+    function parseDate(str) {
+      if (!str) return null;
+      return new Date(str + 'T00:00:00');
+    }
+
+    function formatDateInput(d) {
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function formatDisplayDate(d) {
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    }
+
+    function addDays(d, days) {
+      const result = new Date(d);
+      result.setDate(result.getDate() + days);
+      return result;
+    }
+
+    function diffDays(start, end) {
+      const msPerDay = 1000 * 60 * 60 * 24;
+      return Math.round((end - start) / msPerDay);
+    }
+
+    // Handlers for milestone date adjustments
+    function handleDepartureChange() {
+      const dep = parseDate(document.getElementById('date-us-departure').value);
+      if (!dep) return;
+
+      // Auto-cascade sensible defaults from departure
+      const vfsNor = addDays(dep, 30);
+      const passBack = addDays(vfsNor, 28);
+      const gerVfs = addDays(passBack, 7);
+      const flGer = addDays(gerVfs, 19);
+
+      document.getElementById('date-norway-vfs').value = formatDateInput(vfsNor);
+      document.getElementById('date-passport-back').value = formatDateInput(passBack);
+      document.getElementById('date-german-vfs').value = formatDateInput(gerVfs);
+      document.getElementById('date-flight-germany').value = formatDateInput(flGer);
+
+      recalculateTimeline();
+    }
+
+    function handleNorwayVfsChange() {
+      const norVfs = parseDate(document.getElementById('date-norway-vfs').value);
+      if (!norVfs) return;
+
+      // Default passport return: 28 days courier turnaround
+      const passBack = addDays(norVfs, 28);
+      document.getElementById('date-passport-back').value = formatDateInput(passBack);
+
+      const gerVfs = addDays(passBack, 7);
+      document.getElementById('date-german-vfs').value = formatDateInput(gerVfs);
+
+      const flGer = addDays(gerVfs, 19);
+      document.getElementById('date-flight-germany').value = formatDateInput(flGer);
+
+      recalculateTimeline();
+    }
+
+    function handlePassportBackChange() {
+      const passBack = parseDate(document.getElementById('date-passport-back').value);
+      if (!passBack) return;
+
+      const gerVfs = addDays(passBack, 7);
+      document.getElementById('date-german-vfs').value = formatDateInput(gerVfs);
+
+      const flGer = addDays(gerVfs, 19);
+      document.getElementById('date-flight-germany').value = formatDateInput(flGer);
+
+      recalculateTimeline();
+    }
+
+    function handleGermanVfsChange() {
+      const gerVfs = parseDate(document.getElementById('date-german-vfs').value);
+      if (!gerVfs) return;
+
+      // Schengen processing typically 15-20 calendar days
+      const flGer = addDays(gerVfs, 19);
+      document.getElementById('date-flight-germany').value = formatDateInput(flGer);
+
+      recalculateTimeline();
+    }
+
+    function recalculateTimeline() {
+      const depDate = parseDate(document.getElementById('date-us-departure').value);
+      const norVfs = parseDate(document.getElementById('date-norway-vfs').value);
+      const passBack = parseDate(document.getElementById('date-passport-back').value);
+      const gerVfs = parseDate(document.getElementById('date-german-vfs').value);
+      const flGer = parseDate(document.getElementById('date-flight-germany').value);
+      let gerStayDays = parseInt(document.getElementById('germany-stay-days').value, 10) || 90;
+
+      if (gerStayDays > 90) {
+        gerStayDays = 90;
+        document.getElementById('germany-stay-days').value = 90;
       }
+
+      if (!depDate || !flGer) return;
+
+      // Absolute 180-day hard limit
+      const hardLimit = addDays(depDate, 180);
+      document.getElementById('stat-hard-deadline').innerText = formatDisplayDate(hardLimit);
+
+      // Context labels
+      if (norVfs) {
+        const norOffset = diffDays(depDate, norVfs);
+        document.getElementById('label-norway-offset').innerText = `Day ${norOffset} in Nepal`;
+      }
+      if (norVfs && passBack) {
+        const transit = diffDays(norVfs, passBack);
+        document.getElementById('label-transit-duration').innerText = `${transit} days transit (New Delhi)`;
+      }
+      if (passBack && gerVfs) {
+        const passGap = diffDays(passBack, gerVfs);
+        document.getElementById('label-german-offset').innerText = passGap >= 0 ? `${passGap} days after passport retrieval` : '⚠️ Set BEFORE passport return!';
+      }
+
+      // Calculations
+      const daysInNepal = diffDays(depDate, flGer);
+      const returnUsDate = addDays(flGer, gerStayDays);
+      const totalAbsenceDays = diffDays(depDate, returnUsDate);
+      const bufferDays = 180 - totalAbsenceDays;
+
+      document.getElementById('stat-days-nepal').innerText = `${daysInNepal} days`;
+      document.getElementById('label-nepal-total-stay').innerText = `${daysInNepal} days in Nepal`;
+      document.getElementById('stat-return-us-date').innerText = formatDisplayDate(returnUsDate);
+      document.getElementById('stat-total-absence').innerText = `${totalAbsenceDays} days`;
+
+      const bufferEl = document.getElementById('stat-safety-buffer');
+      const alertBanner = document.getElementById('timeline-alert-banner');
+
+      if (bufferDays >= 10) {
+        bufferEl.innerText = `${bufferDays} days safe`;
+        bufferEl.className = "text-lg font-bold text-emerald-600";
+        alertBanner.className = "mt-4 p-3 rounded-lg text-xs font-medium border bg-emerald-50 border-emerald-200 text-emerald-800";
+        alertBanner.innerHTML = `✅ <strong>Safe Schedule:</strong> Leaves Nepal on ${formatDisplayDate(flGer)}, completes a full ${gerStayDays}-day stay in Germany, and lands in the US on ${formatDisplayDate(returnUsDate)} with a comfortable ${bufferDays}-day buffer before the 180-day limit.`;
+      } else if (bufferDays >= 0) {
+        bufferEl.innerText = `${bufferDays} days left!`;
+        bufferEl.className = "text-lg font-bold text-amber-600";
+        alertBanner.className = "mt-4 p-3 rounded-lg text-xs font-medium border bg-amber-50 border-amber-200 text-amber-800";
+        alertBanner.innerHTML = `⚠️ <strong>Tight Window:</strong> Only ${bufferDays} days of buffer remaining. Any minor flight cancellation or visa pouch delay could jeopardize the 180-day US Green Card boundary. Consider shortening Germany stay to 80–85 days.`;
+      } else {
+        const breached = Math.abs(bufferDays);
+        bufferEl.innerText = `${breached}d OVER LIMIT!`;
+        bufferEl.className = "text-lg font-bold text-rose-600";
+        alertBanner.className = "mt-4 p-3 rounded-lg text-xs font-medium border bg-rose-50 border-rose-200 text-rose-800 font-bold";
+        alertBanner.innerHTML = `🚨 <strong>180-Day Rule Breached by ${breached} Days!</strong> A ${gerStayDays}-day stay in Germany departing Nepal on ${formatDisplayDate(flGer)} pushes her US return to ${formatDisplayDate(returnUsDate)} (Limit: ${formatDisplayDate(hardLimit)}). Reduce the Germany stay to ${gerStayDays - breached - 7} days or leave Nepal earlier!`;
+      }
+
+      renderScrubberPosition();
     }
 
-    function updateTimeline() {
-      const depDateInput = document.getElementById('departure-date').value;
-      if (!depDateInput) return;
-
-      const depDate = new Date(depDateInput + 'T00:00:00');
-      const deadlineDate = new Date(depDate);
-      deadlineDate.setDate(deadlineDate.getDate() + 180);
-
-      document.getElementById('stat-hard-deadline').innerText = deadlineDate.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      });
-
-      renderSliderPosition();
-    }
-
-    function renderSliderPosition() {
-      const depDateInput = document.getElementById('departure-date').value;
-      if (!depDateInput) return;
+    function renderScrubberPosition() {
+      const depDate = parseDate(document.getElementById('date-us-departure').value);
+      if (!depDate) return;
 
       const dayOffset = parseInt(document.getElementById('timeframe-slider').value, 10);
-      const depDate = new Date(depDateInput + 'T00:00:00');
-      
-      const currentDate = new Date(depDate);
-      currentDate.setDate(currentDate.getDate() + dayOffset);
+      const targetDate = addDays(depDate, dayOffset);
 
-      const daysLeft = 180 - dayOffset;
-
-      document.getElementById('slider-day-count').innerText = `Day ${dayOffset}`;
-      document.getElementById('slider-calendar-date').innerText = currentDate.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      });
-
-      const daysLeftEl = document.getElementById('slider-days-left');
-      if (daysLeft > 20) {
-        daysLeftEl.innerText = `${daysLeft} days left`;
-        daysLeftEl.className = "text-lg font-bold text-emerald-600";
-      } else if (daysLeft > 0) {
-        daysLeftEl.innerText = `${daysLeft} days left!`;
-        daysLeftEl.className = "text-lg font-bold text-amber-600";
-      } else {
-        daysLeftEl.innerText = "0 days (Limit reached)";
-        daysLeftEl.className = "text-lg font-bold text-rose-600";
-      }
-
-      const phase = getPhaseDetails(dayOffset);
-      const banner = document.getElementById('phase-banner');
-      banner.className = `mt-4 p-3 rounded-lg text-xs font-medium border ${phase.classes}`;
-      banner.innerText = phase.text;
+      document.getElementById('slider-day-indicator').innerText = `Day ${dayOffset} • ${formatDisplayDate(targetDate)}`;
     }
 
     // --- AUTH & APPLICATION FUNCTIONS ---
@@ -297,7 +407,7 @@
           document.getElementById('add-task-section').classList.remove('hidden');
         }
 
-        updateTimeline();
+        recalculateTimeline();
         loadTasks();
       }
     }
@@ -353,7 +463,7 @@
 
         let adminControls = isAdmin ? `
           <div class="mt-3 flex items-center gap-4 border-t border-slate-100 pt-3 flex-wrap">
-            <button onclick="moveTask('${task.id}', 'up')" class="text-xs font-medium text-slate-600 hover:underline">⬆️ Up</button>
+            <button onclick="moveTask('${task.id}', 'up')" class="text-xs font-medium text-slate-600 hover:underline">⬆️️ Up</button>
             <button onclick="moveTask('${task.id}', 'down')" class="text-xs font-medium text-slate-600 hover:underline">⬇️ Down</button>
             <button onclick="toggleLock('${task.id}', ${task.is_locked})" class="text-xs font-medium ${task.is_locked ? 'text-amber-600' : 'text-slate-600'} hover:underline">
               ${task.is_locked ? '🔓 Unlock' : '🔒 Lock'}
